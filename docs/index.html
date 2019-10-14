@@ -1,0 +1,387 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+  body {
+    
+    text-align: middle;
+    font-weight: 300;
+    font-family: 'Open Sans', sans-serif;
+    color: #121212;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Source Sans Pro', sans-serif;
+  }
+</style>
+<title>CS 184 Mesh Editor</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+
+<body>
+
+<h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2019</h1>
+<h1 align="middle">Project 2: Mesh Editor</h1>
+<h2 align="middle">Nathan Petreaca</h2>
+
+<br><br>
+
+<div>
+
+<h2 align="middle">Overview</h2>
+<p>The basic premise of this project was to first understand different ways of representing 3d surfaces, whether through Bezier Surfaces or Triangle Meshes, and then to also understand different ways of representing these meshes in terms of data, as shown in the use of the half edge data structure. Furthermore, we then extrapolate this understanding to see how we can manipulate and change our meshes and also how to use a mesh as a framework to create more complex shapes as shown in the work using up- sampling and loop subdivision. </p>
+
+<h2 align="middle">Section I: Bezier Curves and Surfaces</h2>
+
+<h3 align="middle">Part 1: Bezier curves with 1D de Casteljau subdivision</h3>
+
+<p>A Bezier curve is a curve widely used in computer graphics to model smooth curves. A Bezier curve of degree n is defined by (n + 1) control points, and is a parametric line based on a single parameter t, which ranges between 0 and 1.  De Casteljau's algorithm is used to define the curve by linearly interpolating between each control point to get n-1 points using t. These n-1 points are then recursively linearly interpolated until a single point is reached. </p>
+
+<p>Shown below, we start out with our initial points for the curve (the white points) and then using a series of linear interpolations (the blue points), derive a point on the curve (the red point). Evaluating t from 0-1 gives the green curve shown.   </p>
+
+<div align="left">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="i (1).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (2).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (3).jpg" align="middle" width="500px"/>
+      </td>
+    </tr>
+    <br>
+    <tr>
+    <td>
+        <img src="i (4).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (5).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (6).jpg" align="middle" width="500px"/>
+      </td>
+    </tr>
+    <tr>
+    <td>
+        <img src="i (7).jpg" align="middle" width="500px"/>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<p>By moving the points around and changing the value of t, we can change the shape of the curve and we can move where the evaluated point it respectively.<p>
+
+<div align="left">
+  <table style="width=100%">
+    <tr>
+        <td>
+        <img src="i (8).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (9).jpg" align="middle" width="500px"/>
+      </td>
+            <td>
+        <img src="i (10).jpg" align="middle" width="500px"/>
+      </td>
+        </tr>
+  </table>
+</div>
+
+<h3 align="middle">Part 2: Bezier surfaces with separable 1D de Casteljau subdivision</h3>
+
+<p>De Casteljau's algorithm simply finds a curve through linear interpolation; thus, a curve can be found across a set of curves by linearly interpolating between sample points across them. This can be done to create a surface out of curves. 4 sets of 4 points are used to find 4 curves using de Casteljau's algorithm then the set of 4 points across the computed curves are linearly interpolated to arrive at a final point in a mesh.
+</p>
+
+<p>Below are some examples of models made from bezier surfaces </p>
+
+<div align="left">
+  <table style="width=100%">
+    <tr>
+        <td>
+        <img src="i (11).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (12).jpg" align="middle" width="500px"/>
+      </td>
+
+        </tr>
+  </table>
+</div>
+
+<h2 align="middle">Section II: Sampling</h2>
+
+<h3 align="middle">Part 3: Average normals for half-edge meshes</h3>
+<p>
+    Using the half-edge data structure, we can find the average normal for vertices. This is done by taking the cross product of triangle edges connected to a vertex. We find the edges by finding the neighboring vertex points to our selected vertex point. We find these neighboring vertices by using the twin and next pointers in each neighboring triangle. This allows us to traverse through the triangles and get their vertices.
+    </p>
+
+<div align="left">
+  <table style="width=100%">
+    <tr>
+        <td>
+        <img src="i (13).jpg" align="middle" width="500px"/>
+        <figcaption align="middle">OpenGL shading without normals.</figcaption>
+      </td>
+      <td>
+        <img src="i (14).jpg" align="middle" width="500px"/>
+        <figcaption align="middle">OpenGL shading with normals</figcaption>
+      </td>
+
+        </tr>
+  </table>
+</div>
+
+<h3 align="middle">Part 4: Half-edge flip</h3>
+<p>To flip an edge really, all that must be done is a series of pointer reassignments. This is possible since the data structure relies on the connections each element of a triangle has to each other. Therefore, to implement this method, all we have to do is draw on a piece of scratch paper 2 triangles connected by an edge and then draw all of the related edges in terms of the half-edge and the twin. Once we do that, we redrew the two triangles but with the edge flipped but keep the positions of the half edges and twins. We then use the two images we drew as a reference for reassigning values.</p>
+
+<img src="9_9.jpg" align="middle" width="700px"/>
+
+<p> I kept getting a missing triangle whenever I flipped an edge and it took me forever to realize that I named a variable wrong.</p>
+
+<p> Here I flip the edge highlighted red.</p>
+<div align="left">
+  <table style="width=100%">
+    <tr>
+        <td>
+        <img src="i (15).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (16).jpg" align="middle" width="500px"/>
+      </td>
+            <td>
+        <img src="i (17).jpg" align="middle" width="500px"/>
+      </td>
+        </tr>
+  </table>
+</div>
+
+<h3 align="middle">Part 5: Half-edge split</h3>
+<p> The strategy I used was the same as for flipping the edge except now I added some extra edges and half-edge pointers. I drew out the pointers faces and edges out in their original configuration, then drew it out again after the split. I added new pointers where there were none and moved previous pointers to places that made sense. Furthermore, I added a vertex to the center position and used that also in all the pointer reassigning. </p>
+
+<img src="9_10.jpg" align="middle" width="700px"/>
+
+<p> Basically, all flipping and splitting come down to is pointer reassignment.</p>
+
+<p> Here we split the edges highlighted red </p>
+
+
+<div align="left">
+  <table style="width=100%">
+    <tr>
+        <td>
+        <img src="i (19).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (20).jpg" align="middle" width="500px"/>
+      </td>
+            <td>
+        <img src="i (21).jpg" align="middle" width="500px"/>
+      </td>
+        </tr>
+        <tr>
+         <td>
+        <img src="i (22).jpg" align="middle" width="500px"/>
+      </td>
+      </tr>
+  </table>
+</div>
+
+<p> Here is the mesh after a series of flips and splits </p>
+
+<div align="left">
+  <table style="width=100%">
+    <tr>
+        <td>
+        <img src="i (19).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (18).jpg" align="middle" width="500px"/>
+      </td>
+      </tr>
+  </table>
+</div>
+
+<h3 align="middle">Part 6: Loop subdivision for mesh upsampling</h3>
+
+
+<p>The gist of loop subdivision is to reshape the mesh in a uniform and repeatable way. It involves two major steps: first computing the new position of each vertex, this includes using a weighted average of the surrounding vertices for both the old and new vertices, and second splitting the mesh up and flipping edges that connect old and new vertices. After these two steps have been completed, the old values are replaced with the precomputed new values. </p>
+
+<p>I think the best way to implement this is in steps. Once one part is working correctly then we should go onto the next part. I happened to not have done this and had a bug that simply had to do with my skills in rudimentary arithmetic. </p>
+
+<p>If you look at the following examples, we can see the behavior of loop subdivision. It has the basic property of making the shape rounder and smaller. It compresses the shape down, moves the vertices in ward and averages out the positions of neighboring vertices. <p>
+
+<div align="left">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="i (23).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (24).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (25).jpg" align="middle" width="500px"/>
+      </td>
+    </tr>
+    <tr>
+          <td>
+        <img src="i (26).jpg" align="middle" width="500px"/>
+      </td>
+            <td>
+        <img src="i (27).jpg" align="middle" width="500px"/>
+      </td>
+    </tr>
+    <br>
+  </table>
+  </div>
+
+<div align="left">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="i (28).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (29).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (30).jpg" align="middle" width="500px"/>
+      </td>
+    </tr>
+    <tr>
+          <td>
+        <img src="i (31).jpg" align="middle" width="500px"/>
+      </td>
+    </tr>
+    <br>
+  </table>
+  </div>
+
+  <div align="left">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="i (32).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (33).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (34).jpg" align="middle" width="500px"/>
+      </td>
+    </tr>
+    <tr>
+          <td>
+        <img src="i (35).jpg" align="middle" width="500px"/>
+      </td>
+    </tr>
+    <br>
+  </table>
+  </div>
+
+
+
+<p>So, if we look at the corners of these examples, like on the cube or the spikes on the torus, we can see that they almost totally disappear and are rounded of completely by the subdivision. The reason for this is that those corners in the simple mesh are not well defined, the sharp corners are a single vertex or a couple triangles; thus, after about the first subdivision iteration, the triangles and vertices that used to define the corner immediately are averaged out by its neighbors making them round.  </p>
+
+<p>We can lessen this effect by simply adding more vertices and triangles to each sharp corner. This will make it so that when the corner is being averaged, its neighbors are all around the corner. This will mean that the average is close to the previously held corner position.  </p>
+
+<p> Below are 2 examples. Here we simply split the edges around one of the sharp corners of the object many times. As shown this helps preserve the sharp corner. </p>
+  <div align="left">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="i (36).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (37).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (38).jpg" align="middle" width="500px"/>
+      </td>
+    </tr>
+    <tr>
+          <td>
+        <img src="i (39).jpg" align="middle" width="500px"/>
+      </td>
+    </tr>
+    <br>
+  </table>
+  </div>
+
+
+  <div align="left">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="i (40).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (41).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (42).jpg" align="middle" width="500px"/>
+      </td>
+    </tr>
+    <tr>
+          <td>
+        <img src="i (43).jpg" align="middle" width="500px"/>
+      </td>
+    </tr>
+    <br>
+  </table>
+  </div>
+
+
+
+<p> Now another observed anomaly, is the fact that in the above examples the cube, it asymmetric, it smooths out but it has almost a twist to it. The reason for this is in the way the initial cube is defined, each vertex does not have the same number of neighboring vertices. This connects to the reasoning above behind why the corners do not get preserved: some corners have more neighbors then others, thus they more effectively keep their initial position and shape. The same thing applies here; if we look at the examples below and count the number of neighbors for these vertices, we see that the one with more neighbors has its shape preserved while the other does not.</p>
+
+<div align="left">
+  <table style="width=100%">
+    <tr>
+        <td>
+        <img src="i (44).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (45).jpg" align="middle" width="500px"/>
+      </td>
+        </tr>
+  </table>
+</div>
+
+
+<p>Therefore, using the above knowledge we simply need to equal out the neighbors of each vertex. In this case this can simply be done by splitting the diagonal edge on each face of the cube.</p>
+
+<p>As shown below this effectively solves the asymmetry problem </p>
+
+<div align="left">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="i (46).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (47).jpg" align="middle" width="500px"/>
+      </td>
+      <td>
+        <img src="i (48).jpg" align="middle" width="500px"/>
+      </td>
+    </tr>
+    <tr>
+          <td>
+        <img src="i (49).jpg" align="middle" width="500px"/>
+      </td>
+            <td>
+        <img src="i (50).jpg" align="middle" width="500px"/>
+      </td>
+    </tr>
+    <br>
+  </table>
+  </div>
+
+
+</body>
+</html>
